@@ -1,0 +1,4 @@
+// jest.smoke.config.js
+module.exports = {
+  testMatch: ['<rootDir>/test/smoke/**/*.test.js'], // Ajusta la ruta según sea necesario
+};

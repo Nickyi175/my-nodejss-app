@@ -1,0 +1,126 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  audit-job:
+    name: Audit Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Audit production dependencies
+        run: npm audit --omit=dev
+
+  build-job:
+    name: Build Artifact
+    runs-on: ubuntu-latest
+    needs: audit-job
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20.x
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm install
+      - name: Build project
+        run: npm run build
+      - name: Move build to root
+        run: |
+          rm -rf public
+          mv build public
+      - uses: actions/upload-pages-artifact@v1
+        with:
+          path: public
+
+  lint-job:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    needs: build-job
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.x
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm install
+      - name: Fix permissions
+        run: chmod +x node_modules/.bin/eslint
+      - name: Lint code
+        run: npm run lint
+
+  test-job:
+    name: Run Tests
+    needs: build-job
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.x
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm install
+      - name: Fix permissions
+        run: chmod +x node_modules/.bin/jest
+      - name: Run tests
+        run: npm run test-ci
+
+  static-analysis-job:
+    name: Static Code Analysis
+    needs: build-job
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+          config-file: .github/codeql/codeql.config.yaml
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm install
+      - name: Run static analysis
+        run: npm run lint
+
+  deploy-job:
+    name: Deploy to GitHub Pages
+    needs: [build-job, lint-job, test-job, static-analysis-job]
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v1
+
+  verify-deployment:
+    name: Verify Deployment
+    needs: deploy-job
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check deployment status
+        run: |
+          sleep 10 # Wait a few seconds to ensure the deployment is live
+          curl -I https://nickyi175.github.io/my-nodejs-app

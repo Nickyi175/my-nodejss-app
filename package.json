@@ -1,0 +1,36 @@
+{
+  "name": "my-nodejs-app",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "chmod +x node_modules/.bin/jest && jest",
+    "test-ci": "chmod +x node_modules/.bin/jest && jest --ci --detectOpenHandles",
+    "smoke": "node smoke-test.cjs",
+    "lint": "npx eslint src/",
+    "build": "echo 'Building project...'",
+    "static-analysis": "echo 'Running static analysis...'",
+    "security": "npm audit"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.16.0",
+    "@babel/eslint-parser": "^7.16.3",
+    "@babel/plugin-transform-runtime": "^7.24.6",
+    "@babel/preset-env": "^7.24.6",
+    "@babel/preset-react": "^7.24.6",
+    "@babel/register": "^7.16.3",
+    "copyfiles": "^2.4.1",
+    "eslint": "^8.57.0",
+    "eslint-plugin-jsdoc": "^39.9.1",
+    "globals": "^15.3.0",
+    "jest": "^27.5.1",
+    "mkdirp": "^1.0.4",
+    "supertest": "^7.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.2.3",
+    "@babel/runtime": "^7.24.6",
+    "axios": "^1.7.2",
+    "express": "^4.19.2"
+  }
+}
